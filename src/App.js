@@ -10,30 +10,50 @@ import {
   CardContent,
   Typography,
   Link,
-  Grid
+  Grid,
+  Grow
  } from '@material-ui/core';
 import QrScanner from 'qr-scanner';
 
 const useStyles = makeStyles(theme => (
   {
     root: {
-      margin: 'auto',
-      maxHeight: '100vh',
-      bottom: 0
+      width: '100vw',
+      height: '100vh',
+      overflow: 'auto'
     },
     video: {
-      height: 12,
-      maxWidth: '100%',
-      objectFit: "cover"
+      width: '100vw',
+      height: '100vh',
+      objectFit: "cover",
+      zIndex:0
+    },
+    scannerTitle: {
+      zIndex: 1000,
+      color: 'white',
+      marginLeft: '15px',
+      marginRight: '15px',
+    },
+    scannerTitleBackground: {
+      position: "absolute",
+      background: 'black',
+      opacity: 0.5,
+      borderRadius: '20px',
+      zIndex: 9,
+      left: 0,
+      top: 0,
+      margin: theme.spacing(2)
     },
     card: {
-      margin: 'auto',
-
-      marginTop: theme.spacing(2)
+      position: 'absolute',
+      zIndex: 9,
+      left: 0,
+      right: 0,
+      top: 0,
+      margin: theme.spacing(2)
     }
   }
 ))
-
 
 function App() {
   const videoRef = useRef(null);
@@ -41,13 +61,10 @@ function App() {
 
   const [result, setResult] = useState(null);
 
+
   useEffect(() => {
-    if (result) {
-      return
-    }
     const qrScanner = new QrScanner(videoRef.current, (result) => {
-      setResult(result);
-      qrScanner.stop()
+      setResult(prev => prev ? prev : result)
     })
 
     qrScanner.start().catch(console.error);
@@ -55,52 +72,44 @@ function App() {
       qrScanner.destroy();
     }
 
-  }, [result])
+  }, [])
 
   const handleOnScanAnother = () => {
     setResult(null)
   }
 
   const scanningView = (
-    <div>
-      <CardMedia>
-        <video about='scanner' className={classes.video} ref={videoRef}></video>
-      <CardContent>
-        <Typography>Scanning QR codes...</Typography>
-      </CardContent>
-      </CardMedia>
-    </div>
+      <div className={classes.scannerTitleBackground}>
+        <Typography variant='body1' className={classes.scannerTitle}>Scanning QR...</Typography>
+      </div>
   )
 
   const resultView = (
-    <div className={classes.root}>
-      <CardContent>
-        <Typography color='textPrimary'>Result:</Typography>
-        <Grid container>
-        <Grid item>
-          <Card variant='outlined'>
-            <CardContent>
-              <Link href={result}>{result}</Link>
-            </CardContent>
-          </Card>
-        </Grid>
-        </Grid>
-      </CardContent>
-      <CardActions>
-        <Button onClick={handleOnScanAnother}>Scan another</Button>
-      </CardActions>
-    </div>
-  )
+    <Grow in>
+      <Card className={classes.card}>
+        <CardContent>
+          <Typography color='textPrimary'>Result:</Typography>
+          <Grid container>
+          <Grid item>
+            <Card variant='outlined'>
+              <CardContent>
+                <Link href={result}>{result}</Link>
+              </CardContent>
+            </Card>
+          </Grid>
+          </Grid>
+        </CardContent>
+        <CardActions>
+          <Button onClick={handleOnScanAnother}>Scan another</Button>
+        </CardActions>
+      </Card>
+    </Grow>
+  );
 
   return (
-    <div>
-      <Container maxWidth='md'>
-        <Card className={classes.card}>
-          <CardHeader title={document.title}>
-          </CardHeader>
-          {result ? resultView : scanningView}
-        </Card>
-      </Container>
+    <div className={classes.root}>
+      <video about='scanner' className={classes.video} ref={videoRef}></video>
+      {result ? resultView : scanningView}
     </div>
   );
 }
